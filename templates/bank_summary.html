@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bank Summary</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-4">🏦 Bank Summary</h2>
+  <a href="/" class="btn btn-secondary mb-3">← Back to Home</a>
+
+  <!-- Numerical Tables -->
+  <h4>Total Saving by Bank & Year</h4>
+  <table class="table table-bordered">
+    <thead><tr><th>Bank</th><th>Year</th><th>Total Saving</th></tr></thead>
+    <tbody>
+      {% for row in saving_data %}
+      <tr><td>{{ row.bank }}</td><td>{{ row.year }}</td><td>{{ row.total_saving }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Total Investment by Bank & Year</h4>
+  <table class="table table-bordered">
+    <thead><tr><th>Bank</th><th>Year</th><th>Total Investment</th></tr></thead>
+    <tbody>
+      {% for row in invested_data %}
+      <tr><td>{{ row.bank }}</td><td>{{ row.year }}</td><td>{{ row.total_investment }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Current Month Totals</h4>
+  <table class="table table-bordered">
+    <thead><tr><th>Bank</th><th>Year</th><th>Current Month Total</th></tr></thead>
+    <tbody>
+      {% for row in current_data %}
+      <tr><td>{{ row.bank }}</td><td>{{ row.year }}</td><td>{{ row.current_month_total }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Graphs -->
+  <h4 class="mt-5">Graph: Savings vs Investments</h4>
+  <canvas id="bankChart"></canvas>
+</div>
+
+<script>
+  const savingData = {{ saving_data | tojson }};
+  const investedData = {{ invested_data | tojson }};
+  const labels = [...new Set(savingData.map(d => d.bank))];
+
+  const savingTotals = labels.map(bank =>
+    savingData.filter(d => d.bank === bank).reduce((sum, d) => sum + d.total_saving, 0)
+  );
+  const investedTotals = labels.map(bank =>
+    investedData.filter(d => d.bank === bank).reduce((sum, d) => sum + d.total_investment, 0)
+  );
+
+  new Chart(document.getElementById('bankChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Savings', data: savingTotals, backgroundColor: '#28a745' },
+        { label: 'Investments', data: investedTotals, backgroundColor: '#007bff' }
+      ]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+</script>
+</body>
+</html>

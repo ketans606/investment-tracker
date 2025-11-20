@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Investment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    function toggleMaturityField() {
+      const accountType = document.querySelector('[name="account_type"]');
+      const maturityGroup = document.getElementById("maturity-group");
+      const maturityInput = document.querySelector('[name="maturity_date"]');
+      if (accountType.value.toLowerCase() === "savings") {
+        maturityGroup.style.display = "none";
+        maturityInput.required = false;
+      } else {
+        maturityGroup.style.display = "block";
+        maturityInput.required = true;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      toggleMaturityField();
+      document.querySelector('[name="account_type"]').addEventListener("change", toggleMaturityField);
+    });
+  </script>
+  <script>
+  function toggleMaturityField() {
+    const accountType = document.querySelector('[name="account_type"]');
+    const maturityGroup = document.getElementById("maturity-group");
+    const maturityInput = document.querySelector('[name="maturity_date"]');
+    const savingInvested = document.querySelector('[name="saving_invested"]');
+
+    if (accountType.value.toLowerCase() === "savings") {
+      maturityGroup.style.display = "none";
+      maturityInput.required = false;
+      savingInvested.value = "Saving";
+    } else {
+      maturityGroup.style.display = "block";
+      maturityInput.required = true;
+      savingInvested.value = "Invested";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    toggleMaturityField();
+    document.querySelector('[name="account_type"]').addEventListener("change", toggleMaturityField);
+  });
+</script>
+
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-4">Update record #{{ record[0] }}</h2>
+  {% if record %}
+<form method="POST" class="row g-3">
+
+    
+    <div class="col-md-6">
+      <label class="form-label">Reference Name</label>
+      <input name="reference_name" class="form-control" value="{{ record[2] }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Bank</label>
+      <select name="bank" class="form-select">
+  {% for b in banks %}
+    <option {% if record[3] == b %}selected{% endif %}>{{ b }}</option>
+  {% endfor %}
+</select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Account Type</label>
+      <select name="account_type" class="form-select" onchange="toggleMaturityField()">
+  {% for t in account_types %}
+    <option {% if record[4] == t %}selected{% endif %}>{{ t }}</option>
+  {% endfor %}
+</select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Saving/Invested</label>
+      <select name="saving_invested" class="form-select">
+        <option {% if record[5] == 'Saving' %}selected{% endif %}>Saving</option>
+        <option {% if record[5] == 'Invested' %}selected{% endif %}>Invested</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option {% if record[6] == 'Open' %}selected{% endif %}>Open</option>
+        <option {% if record[6] == 'Closed' %}selected{% endif %}>Closed</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Year</label>
+      <select name="year" class="form-select">
+        {% for y in range(2025, 2035) %}
+          <option {% if record[7] == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6" id="maturity-group">
+      <label class="form-label">Maturity Date</label>
+      <input name="maturity_date" class="form-control" type="date" value="{{ record[8] }}">
+    </div>
+
+    {% set months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] %}
+    {% for month in months %}
+    <div class="col-md-2">
+      <label class="form-label">{{ month.capitalize() }}</label>
+      <input name="{{ month }}" class="form-control" type="number" step="0.01" value="{{ record[9 + loop.index0] }}">
+    </div>
+    {% endfor %}
+
+    <div class="col-12">
+      <label class="form-label">Notepad</label>
+      <textarea name="notepad" class="form-control">{{ record[-1] }}</textarea>
+    </div>
+
+    <div class="col-12">
+      <button class="btn btn-success">Update record</button>
+      <a href="/" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+{% else %}
+  <div class="alert alert-warning">No record found for this investment ID.</div>
+{% endif %}
+
+</div>
+</body>
+</html>

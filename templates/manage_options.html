@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Dropdown Options</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-4">Manage Bank & Account Type Options</h2>
+
+  <form method="POST" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label class="form-label">Type</label>
+      <select name="type" class="form-select" required>
+        <option value="bank">Bank</option>
+        <option value="account_type">Account Type</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">New Value</label>
+      <input name="value" class="form-control" placeholder="e.g. ICICI or SIP" required>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+      <button class="btn btn-primary w-100">Add</button>
+    </div>
+  </form>
+
+  <h4>Existing Options</h4>
+<ul class="list-group">
+  {% for t, v in options %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><strong>{{ t.capitalize() }}:</strong> {{ v }}</span>
+      <a href="/delete_option/{{ t }}/{{ v }}" class="btn btn-sm btn-danger"
+         onclick="return confirm('Delete {{ v }} from {{ t }} options?')">Delete</a>
+    </li>
+  {% endfor %}
+</ul>
+
+
+  <a href="/" class="btn btn-secondary mt-4">← Back to Home</a>
+</div>
+</body>
+</html>

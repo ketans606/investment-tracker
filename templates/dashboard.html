@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Investment Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-4">📊 Investment Dashboard</h2>
+  <a href="/" class="btn btn-secondary mb-3">← Back to Home</a>
+
+  <!-- Open Unique FD/RD/NSC Count -->
+  <h4>Open Unique FD/RD/NSC Count</h4>
+  <table class="table table-bordered">
+    <thead><tr><th>Bank</th><th>Account Type</th><th>Open Unique Count</th></tr></thead>
+    <tbody>
+      {% for row in open_unique %}
+      <tr><td>{{ row.bank }}</td><td>{{ row.account_type }}</td><td>{{ row.open_unique_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+      <th colspan="3">Totals Across All Banks</th>
+    </tr>
+    {% for row in totals %}
+    <tr>
+      <td>All Banks</td>
+      <td>{{ row.account_type }}</td>
+      <td>{{ row.total_count }}</td>
+    </tr>
+    {% endfor %}
+  </tfoot>
+  </table>
+
+  <!-- Savings/Invested Growth Chart -->
+  <h4 class="mt-5">Monthly Totals (Select Type & Year)</h4>
+  <div class="d-flex mb-3">
+    <select id="typeSelect" class="form-select w-auto me-2">
+      <option value="Savings">Savings</option>
+      <option value="Invested">Invested</option>
+      <option value="Combined">Combined</option>
+    </select>
+    <select id="yearSelect" class="form-select w-auto"></select>
+  </div>
+  <canvas id="growthChart" height="100"></canvas>
+</div>
+
+<script>
+  const savingsMonthly = {{ savings_monthly | tojson }};
+  const investedMonthly = {{ invested_monthly | tojson }};
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const ctx = document.getElementById('growthChart').getContext('2d');
+  let growthChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: months, datasets: [] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  function populateYears(type) {
+    const data = (type === 'Savings') ? savingsMonthly :
+                 (type === 'Invested') ? investedMonthly :
+                 [...new Set([...savingsMonthly.map(r=>r.year), ...investedMonthly.map(r=>r.year)])]
+                   .map(y => ({year:y}));
+    const yearSelect = document.getElementById('yearSelect');
+    yearSelect.innerHTML = '';
+    data.forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row.year;
+      opt.textContent = row.year;
+      yearSelect.appendChild(opt);
+    });
+  }
+
+  function updateChart(type, year) {
+    const datasets = [];
+    if (type === 'Savings') {
+      const row = savingsMonthly.find(r => r.year === parseInt(year));
+      if (row) {
+        datasets.push({
+          label: 'Savings (' + year + ')',
+          data: [row.jan,row.feb,row.mar,row.apr,row.may,row.jun,row.jul,row.aug,row.sep,row.oct,row.nov,row.dec],
+          borderColor: '#28a745',
+          fill: false
+        });
+      }
+    } else if (type === 'Invested') {
+      const row = investedMonthly.find(r => r.year === parseInt(year));
+      if (row) {
+        datasets.push({
+          label: 'Invested (' + year + ')',
+          data: [row.jan,row.feb,row.mar,row.apr,row.may,row.jun,row.jul,row.aug,row.sep,row.oct,row.nov,row.dec],
+          borderColor: '#007bff',
+          fill: false
+        });
+      }
+    } else if (type === 'Combined') {
+      const rowS = savingsMonthly.find(r => r.year === parseInt(year));
+      const rowI = investedMonthly.find(r => r.year === parseInt(year));
+      if (rowS) {
+        datasets.push({
+          label: 'Savings (' + year + ')',
+          data: [rowS.jan,rowS.feb,rowS.mar,rowS.apr,rowS.may,rowS.jun,rowS.jul,rowS.aug,rowS.sep,rowS.oct,rowS.nov,rowS.dec],
+          borderColor: '#28a745',
+          fill: false
+        });
+      }
+      if (rowI) {
+        datasets.push({
+          label: 'Invested (' + year + ')',
+          data: [rowI.jan,rowI.feb,rowI.mar,rowI.apr,rowI.may,rowI.jun,rowI.jul,rowI.aug,rowI.sep,rowI.oct,rowI.nov,rowI.dec],
+          borderColor: '#007bff',
+          fill: false
+        });
+      }
+    }
+    growthChart.data.datasets = datasets;
+    growthChart.update();
+  }
+
+  // Initialize
+  populateYears('Savings');
+  updateChart('Savings', document.getElementById('yearSelect').value);
+
+  // Event listeners
+  document.getElementById('typeSelect').addEventListener('change', e => {
+    populateYears(e.target.value);
+    updateChart(e.target.value, document.getElementById('yearSelect').value);
+  });
+  document.getElementById('yearSelect').addEventListener('change', e => {
+    updateChart(document.getElementById('typeSelect').value, e.target.value);
+  });
+</script>
+</body>
+</html>
