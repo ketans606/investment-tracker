@@ -191,6 +191,7 @@
 
 </form>
 
+  {% if records %}
   <!-- Data Table -->
   <table class="table table-bordered table-striped">
     <thead>
@@ -201,12 +202,10 @@
           <th>{{ month }}</th>
         {% endfor %}
         <th>Total</th><th>Note</th><th>Edit</th><th>Delete</th><th>Delete All</th>
-
       </tr>
     </thead>
     <tbody>
       {% set seen_refs = [] %}
-
       {% for r in records %}
       <tr>
         <td>{{ r[0] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td><td>{{ r[4] }}</td><td>{{ r[5] }}</td>
@@ -219,23 +218,20 @@
         <td>{{ total }}</td>
         <td>{{ r[-1] }}</td>
         <td>
-  {% if r[4] in ['FD', 'NSC', 'RD'] %}
-    <button class="btn btn-sm btn-secondary" disabled>Edit</button>
-  {% else %}
-    <a href="/update/{{ r[1] }}" class="btn btn-sm btn-warning">Edit</a>
-  {% endif %}
-</td>
-
+          {% if r[4] in ['FD', 'NSC', 'RD'] %}
+            <button class="btn btn-sm btn-secondary" disabled>Edit</button>
+          {% else %}
+            <a href="/update/{{ r[1] }}" class="btn btn-sm btn-warning">Edit</a>
+          {% endif %}
+        </td>
         <td><a href="/delete/{{ r[0] }}" class="btn btn-sm btn-danger">Delete</a></td>
         <td>
-  {% if r[2] not in seen_refs %}
-    <a href="/delete_by_ref/{{ r[2] }}" class="btn btn-sm btn-outline-danger"
-       onclick="return confirm('Delete ALL records for {{ r[2] }}?')">Delete All</a>
-    {% set _ = seen_refs.append(r[2]) %}
-  {% endif %}
-</td>
-
-
+          {% if r[2] not in seen_refs %}
+            <a href="/delete_by_ref/{{ r[2] }}" class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Delete ALL records for {{ r[2] }}?')">Delete All</a>
+            {% set _ = seen_refs.append(r[2]) %}
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
       <tr class="table-secondary fw-bold">
@@ -250,6 +246,10 @@
 
   <a href="/export/csv" class="btn btn-outline-secondary">Export CSV</a>
   <a href="/export/excel" class="btn btn-outline-success">Export Excel</a>
+{% else %}
+  <p class="alert alert-warning">No data yet. Apply filters to see results.</p>
+{% endif %}
+
 </div>
 </body>
 </html>

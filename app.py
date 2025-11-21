@@ -366,7 +366,7 @@ def index():
         except Exception as e:
             return f"Error: {e}", 400
 
-    # --- GET method: filter and display records ---
+        # --- GET method: filter and display records ---
     with sqlite3.connect(DB) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM options WHERE type='bank' ORDER BY value")
@@ -386,51 +386,57 @@ def index():
         "unique_only": request.args.get("unique_only", "")
     }
 
-    base_query = "SELECT * FROM investments WHERE 1=1"
-    params = []
-
-    for field, value in filters.items():
-        if field in ["bank", "account_type", "saving_invested", "status", "year"] and value:
-            base_query += f" AND {field} LIKE ?"
-            params.append(f"%{value}%")
-    if filters["start_date"]:
-        base_query += " AND maturity_date >= ?"
-        params.append(filters["start_date"])
-    if filters["end_date"]:
-        base_query += " AND maturity_date <= ?"
-        params.append(filters["end_date"])
-
-    if filters["unique_only"]:
-        query = f"""
-            SELECT * FROM (
-                {base_query}
-            )
-            WHERE id IN (
-                SELECT MIN(id)
-                FROM investments
-                GROUP BY reference_name
-            )
-            ORDER BY reference_name, year
-        """
-    else:
-        query = base_query + " ORDER BY reference_name, year"
-
-    with sqlite3.connect(DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-
+    rows = []   # ✅ default: no data
     monthly_totals = [0] * 12
-    for row in rows:
-        for i in range(9, 21):
-            monthly_totals[i - 9] += safe_float(row[i])
+    next_maturity = []
 
-    next_maturity = get_upcoming_maturities()
+    # ✅ only run query if at least one filter is set
+    if any(filters.values()):
+        base_query = "SELECT * FROM investments WHERE 1=1"
+        params = []
 
-    # ✅ Make sure this line is inside the function and properly indented
+        for field, value in filters.items():
+            if field in ["bank", "account_type", "saving_invested", "status", "year"] and value:
+                base_query += f" AND {field} LIKE ?"
+                params.append(f"%{value}%")
+        if filters["start_date"]:
+            base_query += " AND maturity_date >= ?"
+            params.append(filters["start_date"])
+        if filters["end_date"]:
+            base_query += " AND maturity_date <= ?"
+            params.append(filters["end_date"])
+
+        if filters["unique_only"]:
+            query = f"""
+                SELECT * FROM (
+                    {base_query}
+                )
+                WHERE id IN (
+                    SELECT MIN(id)
+                    FROM investments
+                    GROUP BY reference_name
+                )
+                ORDER BY reference_name, year
+            """
+        else:
+            query = base_query + " ORDER BY reference_name, year"
+
+        with sqlite3.connect(DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+
+        monthly_totals = [0] * 12
+        for row in rows:
+            for i in range(9, 21):
+                monthly_totals[i - 9] += safe_float(row[i])
+
+        next_maturity = get_upcoming_maturities()
+
     return render_template("index.html", records=rows, filters=filters,
-                       monthly_totals=monthly_totals, next_maturity=next_maturity,
-                       banks=banks, account_types=account_types)
+                           monthly_totals=monthly_totals, next_maturity=next_maturity,
+                           banks=banks, account_types=account_types)
+
 
 
 
